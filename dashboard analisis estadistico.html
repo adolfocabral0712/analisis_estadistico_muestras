@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis Estadístico de Muestreo</title>
+<style>
+:root{--bg:#0d1117;--panel:#151b23;--border:#2b3644;--text:#f3f6f9;--muted:#9eabb8;--lime:#b8ff2c;--lime-soft:#d8ff8a;--red:#ff5d5d;--red-soft:#3a1e22;--green-soft:#1c3324;--amber:#ffcc66;--shadow:0 12px 30px rgba(0,0,0,.22)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(180deg,#0b0f14 0%,#101720 100%);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+.wrap{width:min(1650px,96vw);margin:0 auto;padding:20px 0 40px}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.eyebrow{color:var(--lime);font-size:12px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;margin-bottom:6px}
+h1{margin:0;font-size:clamp(25px,3vw,40px);letter-spacing:-.03em;line-height:1.05}
+.subtitle{margin-top:8px;color:var(--muted);font-size:14px}
+.updated{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 14px;min-width:225px;box-shadow:var(--shadow);color:var(--muted);font-size:12px}
+.updated strong{display:block;color:var(--text);margin-top:3px;font-size:14px}
+.criteria{display:flex;flex-wrap:wrap;gap:9px;margin:17px 0}
+.badge{border-radius:999px;border:1px solid #38531e;background:#16220f;color:var(--lime-soft);padding:8px 12px;font-size:11px;font-weight:900}
+.filters{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px;display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:12px;box-shadow:var(--shadow);margin-bottom:16px}
+label{display:block;color:var(--muted);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+select,input{width:100%;background:#0f151d;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 12px;outline:none}
+.cards{display:grid;grid-template-columns:repeat(8,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:15px;box-shadow:var(--shadow);min-height:110px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.card .label{color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:900;letter-spacing:.06em;margin-bottom:8px;text-align:center;width:100%}
+.card .value{font-size:26px;font-weight:900;letter-spacing:-.03em;text-align:center;width:100%}
+.card .hint{color:var(--muted);font-size:11px;margin-top:6px;text-align:center;width:100%}
+.good .value{color:var(--lime)} .bad .value{color:var(--red)}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:15px 16px;border-bottom:1px solid var(--border)}
+.section-title{color:var(--lime-soft);font-weight:900;font-size:15px}
+.section-note{color:var(--muted);font-size:11px}
+.table-wrap{width:100%;overflow:auto}
+table{width:max-content;min-width:100%;border-collapse:collapse;table-layout:auto}
+th,td{padding:11px 9px;border-bottom:1px solid #242e3a;text-align:center;font-size:12px;white-space:nowrap;width:1%;}
+th{position:sticky;top:0;z-index:2;background:#111821;color:#b9c4cf;font-size:10px;text-transform:uppercase;letter-spacing:.045em}
+td.left,th.left{text-align:left;width:auto;}
+tbody tr:hover{background:#1d2733}
+.status{display:inline-flex;justify-content:center;min-width:104px;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.04em}
+.status.ok{background:var(--green-soft);color:var(--lime);border:1px solid #365c36}
+.status.no{background:var(--red-soft);color:#ff8f8f;border:1px solid #65323a}
+.status.wait{background:#342b19;color:var(--amber);border:1px solid #65542e}
+.error-ok{color:var(--lime);font-weight:900}.error-no{color:var(--red);font-weight:900}
+.progress-box{padding:18px 16px 20px}
+.progress-row{display:grid;grid-template-columns:minmax(250px,1.5fr) 2.5fr 145px;gap:12px;align-items:center;margin:9px 0}
+.progress-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.track{height:12px;background:#0e141b;border:1px solid #25303c;border-radius:999px;overflow:hidden}
+.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#77a91e,var(--lime));min-width:2px}
+.progress-value{color:var(--muted);font-size:11px;text-align:right}
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}
+.errorbox{margin-bottom:16px;padding:15px;background:#2a1619;border:1px solid #5a2a31;border-radius:12px;color:#ffaaaa;line-height:1.5;font-size:13px}
+.footer-note{color:var(--muted);font-size:11px;line-height:1.6;padding:2px 2px 14px}
+@media(max-width:1300px){.cards{grid-template-columns:repeat(4,1fr)}.filters{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.progress-row{grid-template-columns:1fr}.progress-value{text-align:left}}
+@media(max-width:500px){.wrap{width:94vw}.cards,.filters{grid-template-columns:1fr}.card .value{font-size:23px}}
+
+@media (max-width:720px){
+  .updated{
+    margin-top:18px !important;
+    margin-bottom:0 !important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="topbar">
+<div><div class="eyebrow">Control estadístico</div><h1>ANÁLISIS ESTADÍSTICO DE MUESTREO</h1><div class="subtitle">Análisis estadístico de densidad por Monte y Producto sobre la población real de remitos FRIMOSA</div></div>
+<div class="updated">Datos actualizados<strong id="actualizado">Cargando...</strong></div>
+</div>
+
+<div id="errorGlobal"></div>
+
+<div class="filters">
+<div><label for="fAno">Año operativo</label><select id="fAno"><option value="">TODOS</option></select></div>
+<div><label for="fMes">Mes operativo</label><select id="fMes"><option value="">TODOS</option></select></div>
+<div><label for="fMonte">Monte</label><select id="fMonte"><option value="">TODOS</option></select></div>
+<div><label for="fProducto">Producto</label><select id="fProducto"><option value="">TODOS</option></select></div>
+<div><label for="fBuscar">Buscar</label><input id="fBuscar" type="search" placeholder="Monte o producto..."></div>
+</div>
+
+<div class="cards">
+<div class="card"><div class="label">Población total</div><div class="value" id="kPoblacion">-</div><div class="hint">Remitos FRIMOSA</div></div>
+<div class="card"><div class="label">Muestras realizadas</div><div class="value" id="kMuestras">-</div><div class="hint">Mediciones válidas</div></div>
+<div class="card"><div class="label">% población muestreada</div><div class="value" id="kPorcentaje">-</div><div class="hint">Muestras / población</div></div>
+<div class="card"><div class="label">Grupos analizados</div><div class="value" id="kGrupos">-</div><div class="hint">Monte + Producto</div></div>
+<div class="card good"><div class="label">Cumplen</div><div class="value" id="kCumplen">-</div><div class="hint">Error ≤ 5 %</div></div>
+<div class="card bad"><div class="label">No cumplen</div><div class="value" id="kNoCumplen">-</div><div class="hint">Error &gt; 5 %</div></div>
+<div class="card"><div class="label">Sin estimar</div><div class="value" id="kSinEstimar">-</div><div class="hint">Menos de 2 muestras</div></div>
+<div class="card"><div class="label">Error promedio</div><div class="value" id="kErrorPromedio">-</div><div class="hint">Promedio de error de los grupos filtrados</div></div>
+</div>
+
+<div class="section">
+<div class="section-head">
+<div><div class="section-title">RESULTADOS POR MONTE + PRODUCTO</div><div class="section-note">Estadística calculada con t de Student y corrección por población finita.</div></div>
+<div class="section-note" id="resumenTabla"></div>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th class="left">Monte</th><th class="left">Producto</th><th>Población N</th><th>Muestras n</th><th>% muestreado</th><th>Dens. promedio</th><th>Desv. Est.</th><th>CV %</th><th>Error actual</th><th>IC 95 %</th><th>N req. grande</th><th>N req. finita</th><th>Faltan</th><th>gl</th><th>t crítico</th><th>Estado</th>
+</tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+
+<div class="section">
+<div class="section-head"><div class="section-title">AVANCE DEL MUESTREO</div><div class="section-note">Muestras realizadas comparadas con la cantidad requerida con población finita.</div></div>
+<div class="progress-box" id="progressBox"></div>
+</div>
+
+<div class="footer-note">
+<div style="line-height:1.75">
+<div><strong>CONFIANZA 95 %:</strong> el análisis estadístico se realiza con un nivel de confianza del 95 %.</div>
+<div><strong>ERROR MÁXIMO ±5 %:</strong> el error relativo objetivo establecido para considerar suficiente el muestreo es de ±5 %.</div>
+<div><strong>t DE STUDENT:</strong> se utiliza la distribución t de Student; los grados de libertad se calculan como n - 1.</div>
+<div><strong>POBLACIÓN FINITA:</strong> el error actual, el intervalo de confianza y el tamaño de muestra requerido incorporan la corrección por población finita. La población N corresponde a los remitos de cada Año operativo + Mes operativo + Monte + Producto.</div>
+<div><strong>PERÍODO 26 → 25:</strong> cada mes operativo comprende desde el día 26 del mes anterior hasta el día 25 del mes indicado.</div>
+<div><strong>DEPÓSITO FRIMOSA:</strong> la población analizada corresponde únicamente a remitos del depósito FRIMOSA.</div>
+<div><strong>EXCLUYE TROZA:</strong> no se consideran productos cuyo nombre contenga TROZA. El dashboard muestra información desde 2025 en adelante y excluye además montes cuyo nombre contenga BALANZA.</div>
+
+<div style="margin-top:14px;"><strong>N REQ. GRANDE:</strong> cantidad de muestras necesarias suponiendo una población muy grande o infinita, usando t de Student y el error objetivo de ±5 %.</div>
+<div><strong>N REQ. FINITA:</strong> cantidad de muestras necesarias considerando la población real de viajes/remitos del grupo y aplicando la corrección por población finita.</div>
+<div><strong>FALTAN:</strong> cantidad de muestras adicionales necesarias para alcanzar el tamaño de muestra requerido con población finita. Si el valor es 0, el grupo ya alcanzó o superó el mínimo requerido.</div>
+<div><strong>gl:</strong> grados de libertad utilizados para obtener el valor crítico de t de Student. Se calculan como n - 1.</div>
+<div><strong>t CRÍTICO:</strong> valor crítico de la distribución t de Student correspondiente a los grados de libertad del grupo y a un nivel de confianza del 95 %.</div>
+<div><strong>ERROR PROMEDIO:</strong> promedio aritmético del error actual porcentual de los grupos que quedan visibles según los filtros seleccionados. Los grupos SIN ESTIMAR no participan del promedio.</div>
+</div>
+</div>
+</div>
+
+<script>
+const JSON_URL = "https://dl.dropbox.com/scl/fi/s0yaqhb8zac79rnmuz9ib/MuestreoEstadistico.json?rlkey=kv0hqxqhg1l82otsz3q3q0y5j&dl=1";
+const MESES=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SETIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+let registrosOriginales=[], registrosFiltrados=[];
+const $=id=>document.getElementById(id);
+const num=v=>Number.isFinite(Number(v))?Number(v):null;
+const texto=v=>String(v??"").trim();
+const esc=v=>String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function fmt(v,d=2){const n=num(v);return n===null?"-":n.toLocaleString("es-UY",{minimumFractionDigits:d,maximumFractionDigits:d})}
+function fmtInt(v){const n=num(v);return n===null?"-":Math.round(n).toLocaleString("es-UY")}
+function fmtPct(v){const n=num(v);return n===null?"-":n.toLocaleString("es-UY",{minimumFractionDigits:2,maximumFractionDigits:2})+" %"}
+function fechaUY(v){if(!v)return "-";const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);return d.toLocaleString("es-UY",{timeZone:"America/Montevideo",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).replace(",","")}
+function periodoActual(){const ahora=new Date();let ano=Number(new Intl.DateTimeFormat("en-CA",{timeZone:"America/Montevideo",year:"numeric"}).format(ahora));let mes=Number(new Intl.DateTimeFormat("en-CA",{timeZone:"America/Montevideo",month:"2-digit"}).format(ahora));const dia=Number(new Intl.DateTimeFormat("en-CA",{timeZone:"America/Montevideo",day:"2-digit"}).format(ahora));if(dia>=26){mes++;if(mes===13){mes=1;ano++}}return{ano,mes}}
+function rangoPeriodo(ano,mes){let mi=mes-1,ai=ano;if(mi===0){mi=12;ai=ano-1}return `26/${String(mi).padStart(2,"0")}/${ai} – 25/${String(mes).padStart(2,"0")}/${ano}`}
+function registrosConFiltros(excluir=null){
+ const ano=excluir==="fAno"?"":$("fAno").value;
+ const mes=excluir==="fMes"?"":$("fMes").value;
+ const monte=excluir==="fMonte"?"":$("fMonte").value;
+ const producto=excluir==="fProducto"?"":$("fProducto").value;
+ const buscar=$("fBuscar").value.trim().toUpperCase();
+ return registrosOriginales.filter(r=>{
+   if(ano && String(r.ano_operativo)!==ano)return false;
+   if(mes && String(r.mes_operativo)!==mes)return false;
+   if(monte && texto(r.monte_origen)!==monte)return false;
+   if(producto && texto(r.producto)!==producto)return false;
+   if(buscar && !(texto(r.monte_origen)+" "+texto(r.producto)).toUpperCase().includes(buscar))return false;
+   return true;
+ });
+}
+function actualizarSelect(id,valores,etiqueta=null){
+ const s=$(id),anterior=s.value;
+ let u=[...new Set(valores.filter(v=>v!==null&&v!==undefined&&String(v)!==""))];
+ if(id==="fAno")u.sort((a,b)=>Number(b)-Number(a)); else if(id==="fMes")u.sort((a,b)=>Number(a)-Number(b)); else u.sort((a,b)=>String(a).localeCompare(String(b),"es"));
+ s.innerHTML='<option value="">TODOS</option>'+u.map(v=>`<option value="${esc(v)}">${esc(etiqueta?etiqueta(v):v)}</option>`).join("");
+ if(u.map(String).includes(String(anterior)))s.value=anterior; else s.value="";
+}
+function actualizarFiltros(){
+ const actual=periodoActual();
+ actualizarSelect("fAno",registrosConFiltros("fAno").map(r=>String(r.ano_operativo)));
+ const a=$("fAno").value;
+ const meses=registrosConFiltros("fMes").filter(r=>(!a||String(r.ano_operativo)===a) && !(Number(r.ano_operativo)===actual.ano && Number(r.mes_operativo)>actual.mes)).map(r=>String(r.mes_operativo));
+ actualizarSelect("fMes",meses,v=>MESES[Number(v)-1]);
+ actualizarSelect("fMonte",registrosConFiltros("fMonte").map(r=>texto(r.monte_origen)));
+ actualizarSelect("fProducto",registrosConFiltros("fProducto").map(r=>texto(r.producto)));
+}
+function render(){
+ registrosFiltrados=registrosConFiltros();
+ const poblacion=registrosFiltrados.reduce((a,r)=>a+(num(r.poblacion_n)??0),0);
+ const muestras=registrosFiltrados.reduce((a,r)=>a+(num(r.muestras_n)??0),0);
+ const porcentaje=poblacion>0?muestras/poblacion*100:0;
+ const cumplen=registrosFiltrados.filter(r=>texto(r.estado_muestreo).toUpperCase()==="CUMPLE").length;
+ const noCumplen=registrosFiltrados.filter(r=>texto(r.estado_muestreo).toUpperCase()==="NO CUMPLE").length;
+ const sinEstimar=registrosFiltrados.filter(r=>texto(r.estado_muestreo).toUpperCase()==="SIN ESTIMAR").length;
+
+ const erroresValidos=registrosFiltrados
+   .map(r=>num(r.error_actual_porcentaje))
+   .filter(v=>v!==null);
+
+ const errorPromedio=erroresValidos.length
+   ? erroresValidos.reduce((a,b)=>a+b,0)/erroresValidos.length
+   : null;
+
+ $("kPoblacion").textContent=fmtInt(poblacion);
+ $("kMuestras").textContent=fmtInt(muestras);
+ $("kPorcentaje").textContent=fmtPct(porcentaje);
+ $("kGrupos").textContent=fmtInt(registrosFiltrados.length);
+ $("kCumplen").textContent=fmtInt(cumplen);
+ $("kNoCumplen").textContent=fmtInt(noCumplen);
+ $("kSinEstimar").textContent=fmtInt(sinEstimar);
+ $("kErrorPromedio").textContent=errorPromedio===null?"-":"±"+fmtPct(errorPromedio);
+
+ renderTabla();renderAvance();
+}
+function renderTabla(){
+ const tb=$("tbody");
+ if(!registrosFiltrados.length){tb.innerHTML='<tr><td colspan="16" class="empty">No hay registros para los filtros seleccionados.</td></tr>';$("resumenTabla").textContent="";return}
+ const rank={"NO CUMPLE":0,"SIN ESTIMAR":1,"CUMPLE":2};
+ const arr=[...registrosFiltrados].sort((a,b)=>(rank[texto(a.estado_muestreo).toUpperCase()]??9)-(rank[texto(b.estado_muestreo).toUpperCase()]??9)||(num(b.muestras_faltantes)??-1)-(num(a.muestras_faltantes)??-1)||texto(a.monte_origen).localeCompare(texto(b.monte_origen),"es"));
+ tb.innerHTML=arr.map(r=>{
+   const e=texto(r.estado_muestreo).toUpperCase(), cls=e==="CUMPLE"?"ok":e==="NO CUMPLE"?"no":"wait", ec=e==="CUMPLE"?"error-ok":e==="NO CUMPLE"?"error-no":"";
+   const ic=num(r.ic95_inferior)!==null&&num(r.ic95_superior)!==null?`${fmt(r.ic95_inferior,3)} – ${fmt(r.ic95_superior,3)}`:"-";
+   return `<tr><td class="left">${esc(r.monte_origen)}</td><td class="left">${esc(r.producto)}</td><td>${fmtInt(r.poblacion_n)}</td><td>${fmtInt(r.muestras_n)}</td><td>${fmtPct(r.porcentaje_muestreado)}</td><td>${fmt(r.densidad_promedio,3)}</td><td>${fmt(r.desviacion_estandar,3)}</td><td>${fmtPct(r.cv_porcentaje)}</td><td class="${ec}">${num(r.error_actual_porcentaje)!==null?"±"+fmtPct(r.error_actual_porcentaje):"-"}</td><td>${ic}</td><td>${fmtInt(r.muestras_requeridas_poblacion_grande)}</td><td>${fmtInt(r.muestras_requeridas)}</td><td>${fmtInt(r.muestras_faltantes)}</td><td>${fmtInt(r.grados_libertad)}</td><td>${fmt(r.t_critico,4)}</td><td><span class="status ${cls}">${esc(e)}</span></td></tr>`;
+ }).join("");
+ const ano=$("fAno").value,mes=$("fMes").value;
+ $("resumenTabla").textContent=(ano&&mes?`${MESES[Number(mes)-1]} ${ano} · ${rangoPeriodo(Number(ano),Number(mes))} · `:"")+`${registrosFiltrados.length} grupos`;
+}
+function renderAvance(){
+ const box=$("progressBox");
+ if(!registrosFiltrados.length){box.innerHTML='<div class="empty">Sin datos para mostrar.</div>';return}
+ const arr=[...registrosFiltrados].sort((a,b)=>(num(b.muestras_faltantes)??0)-(num(a.muestras_faltantes)??0)).slice(0,50);
+ box.innerHTML=arr.map(r=>{
+   const n=num(r.muestras_n)??0, req=num(r.muestras_requeridas), pct=req!==null&&req>0?Math.min(100,n/req*100):0;
+   return `<div class="progress-row"><div class="progress-label" title="${esc(texto(r.monte_origen)+" | "+texto(r.producto))}">${esc(r.monte_origen)} · ${esc(r.producto)}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="progress-value">${fmtInt(n)} / ${req!==null?fmtInt(req):"-"}</div></div>`;
+ }).join("");
+}
+function cambioFiltro(){actualizarFiltros();render()}
+async function cargar(){
+ try{
+   const res=await fetch(JSON_URL,{cache:"no-store"});if(!res.ok)throw new Error("HTTP "+res.status);
+   const data=await res.json();$("actualizado").textContent=fechaUY(data.actualizado);
+   registrosOriginales=(Array.isArray(data.registros)?data.registros:[]).filter(r=>{
+     const ano=Number(r.ano_operativo);
+     const producto=texto(r.producto).toUpperCase();
+     const monte=texto(r.monte_origen).toUpperCase();
+
+     return ano>=2025 &&
+            !producto.includes("TROZA") &&
+            !monte.includes("BALANZA");
+   });
+   const anos=[...new Set(registrosOriginales.map(r=>String(r.ano_operativo)))].sort((a,b)=>Number(b)-Number(a));
+   actualizarSelect("fAno",anos);
+   const actual=periodoActual();
+   if(anos.includes(String(actual.ano)))$("fAno").value=String(actual.ano);
+   actualizarFiltros();
+   const meses=[...$("fMes").options].map(o=>o.value);
+   if($("fAno").value===String(actual.ano)&&meses.includes(String(actual.mes)))$("fMes").value=String(actual.mes);
+   actualizarFiltros();render();
+ }catch(error){
+   console.error(error);$("actualizado").textContent="No disponible";
+   $("errorGlobal").innerHTML=`<div class="errorbox"><strong>No se pudo leer MuestreoEstadistico.json.</strong><br>Verificá la ubicación del JSON o cambiá la constante <strong>JSON_URL</strong> por el enlace directo correspondiente.<br><br>Error: ${esc(error.message)}</div>`;
+ }
+}
+["fAno","fMes","fMonte","fProducto"].forEach(id=>$(id).addEventListener("change",cambioFiltro));
+$("fBuscar").addEventListener("input",cambioFiltro);
+cargar();
+</script>
+</body>
+</html>

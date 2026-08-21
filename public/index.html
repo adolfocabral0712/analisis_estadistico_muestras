@@ -42,16 +42,16 @@ tbody tr:hover{background:#1d2733}
 .status.wait{background:#342b19;color:var(--amber);border:1px solid #65542e}
 .error-ok{color:var(--lime);font-weight:900}.error-no{color:var(--red);font-weight:900}
 .progress-box{padding:18px 16px 20px}
-.progress-row{display:grid;grid-template-columns:minmax(250px,1.5fr) 2.5fr 145px;gap:12px;align-items:center;margin:9px 0}
-.progress-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
-.track{height:12px;background:#0e141b;border:1px solid #25303c;border-radius:999px;overflow:hidden}
-.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#77a91e,var(--lime));min-width:2px}
-.progress-value{color:var(--muted);font-size:11px;text-align:right}
+.progress-row{display:flex;justify-content:space-between;align-items:center;gap:18px;margin:10px 0;padding:2px 0}
+.progress-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;flex:1}
+
+
+.progress-value{color:var(--text);font-size:12px;text-align:right;font-weight:800;white-space:normal}
 .empty{padding:28px 18px;text-align:center;color:var(--muted)}
 .errorbox{margin-bottom:16px;padding:15px;background:#2a1619;border:1px solid #5a2a31;border-radius:12px;color:#ffaaaa;line-height:1.5;font-size:13px}
 .footer-note{color:var(--muted);font-size:11px;line-height:1.6;padding:2px 2px 14px}
 @media(max-width:1300px){.cards{grid-template-columns:repeat(4,1fr)}.filters{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.progress-row{grid-template-columns:1fr}.progress-value{text-align:left}}
+@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}.filters{grid-template-columns:repeat(2,1fr)}.progress-row{align-items:flex-start}.progress-value{text-align:right}}
 @media(max-width:500px){.wrap{width:94vw}.cards,.filters{grid-template-columns:1fr}.card .value{font-size:23px}}
 
 @media (max-width:720px){
@@ -106,7 +106,7 @@ tbody tr:hover{background:#1d2733}
 </div>
 
 <div class="section">
-<div class="section-head"><div class="section-title">AVANCE DEL MUESTREO</div><div class="section-note">Muestras realizadas comparadas con la cantidad requerida con población finita.</div></div>
+<div class="section-head"><div class="section-title">AVANCE DEL MUESTREO</div><div class="section-note"></div></div>
 <div class="progress-box" id="progressBox"></div>
 </div>
 
@@ -131,7 +131,7 @@ tbody tr:hover{background:#1d2733}
 </div>
 
 <script>
-const JSON_URL = "/api/muestreo";
+const JSON_URL = "https://dl.dropbox.com/scl/fi/s0yaqhb8zac79rnmuz9ib/MuestreoEstadistico.json?rlkey=kv0hqxqhg1l82otsz3q3q0y5j&dl=1";
 const MESES=["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SETIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
 let registrosOriginales=[], registrosFiltrados=[];
 const $=id=>document.getElementById(id);
@@ -218,11 +218,33 @@ function renderTabla(){
 }
 function renderAvance(){
  const box=$("progressBox");
- if(!registrosFiltrados.length){box.innerHTML='<div class="empty">Sin datos para mostrar.</div>';return}
- const arr=[...registrosFiltrados].sort((a,b)=>(num(b.muestras_faltantes)??0)-(num(a.muestras_faltantes)??0)).slice(0,50);
+ if(!registrosFiltrados.length){
+   box.innerHTML='<div class="empty">Sin datos para mostrar.</div>';
+   return;
+ }
+
+ const arr=[...registrosFiltrados]
+   .sort((a,b)=>(num(b.muestras_faltantes)??0)-(num(a.muestras_faltantes)??0))
+   .slice(0,50);
+
  box.innerHTML=arr.map(r=>{
-   const n=num(r.muestras_n)??0, req=num(r.muestras_requeridas), pct=req!==null&&req>0?Math.min(100,n/req*100):0;
-   return `<div class="progress-row"><div class="progress-label" title="${esc(texto(r.monte_origen)+" | "+texto(r.producto))}">${esc(r.monte_origen)} · ${esc(r.producto)}</div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="progress-value">${fmtInt(n)} / ${req!==null?fmtInt(req):"-"}</div></div>`;
+   const n=num(r.muestras_n)??0;
+   const req=num(r.muestras_requeridas);
+
+   return `
+     <div class="progress-row">
+       <div
+         class="progress-label"
+         title="${esc(texto(r.monte_origen)+" | "+texto(r.producto))}"
+       >
+         ${esc(r.monte_origen)} · ${esc(r.producto)}
+       </div>
+
+       <div class="progress-value">
+         ${fmtInt(n)} realizadas / ${req!==null?fmtInt(req):"-"} requeridas para 95% de confianza y ±5% de error
+       </div>
+     </div>
+   `;
  }).join("");
 }
 function cambioFiltro(){actualizarFiltros();render()}
